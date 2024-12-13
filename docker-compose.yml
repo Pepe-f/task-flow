@@ -1,0 +1,99 @@
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:4-management
+    restart: unless-stopped
+    hostname: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    networks:
+      - backend
+
+  postgres:
+    container_name: postgres
+    image: postgres:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    expose:
+      - 5432
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  postgres_admin:
+    container_name: postgres_admin
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    env_file:
+      - ./apps/api/.env
+    ports:
+      - '15432:80'
+    depends_on:
+      - postgres
+    networks:
+      - backend
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '6379:6379'
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  api:
+    container_name: api
+    build:
+      context: ./
+      dockerfile: ./apps/api/Dockerfile
+      target: development
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - postgres
+      - redis
+    expose:
+      - 3000
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev api
+    env_file:
+      - ./apps/api/.env
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  rabbit_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
