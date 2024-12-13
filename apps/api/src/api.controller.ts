@@ -3,10 +3,10 @@ import { ApiService } from './api.service';
 
 @Controller()
 export class ApiController {
-  constructor(private readonly appService: ApiService) {}
+  constructor(private readonly apiService: ApiService) {}
 
   @Get()
   getHello(): string {
-    return this.appService.getHello();
+    return this.apiService.getHello();
   }
 }
