@@ -5,5 +5,4 @@ export const docsConfig = new DocumentBuilder()
   .setDescription('Api for Task Flow application')
   .setVersion('1.0.0')
   .addBearerAuth()
-  .addTag('Server NestJS')
   .build();
